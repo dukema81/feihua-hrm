@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>飞花 HRM · 登录</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-left">
+      <div class="lg">飞花 HRM</div>
+      <div class="sub">组织 · 员工 · 考勤 · 请假 · 薪资 · 招聘 · 绩效 · 培训 · 合同</div>
+      <ul>
+        <li>员工全生命周期：入职试用、转正评估、调岗、离职交接四态闸口</li>
+        <li>考勤口径清晰：弹性宽限、迟到早退缺卡缺勤自动判定，月度出勤率</li>
+        <li>假期额度管控：年假按工龄折算，余额不足/时间重叠双重拦截</li>
+        <li>薪资自动核算：绩效奖金 + 加班费（1.5/2/3 倍）− 三险一金 − 个税七档累进</li>
+        <li>招聘到离职闭环：职位、候选人、面试、Offer、绩效、培训、合同预警</li>
+        <li>开放接口：API Key / Webhook / 增量同步，与 OA、ERP、钉钉企业微信对接</li>
+      </ul>
+      <div class="spacer"></div>
+      <div class="sub" style="font-size:11.5px">feihua-hrm v1.0.0 · 演示数据为确定性生成</div>
+    </div>
+    <div class="login-right">
+      <h2>账号登录</h2>
+      <div class="hint">请输入企业账号与密码</div>
+      <div class="field">
+        <label>账号</label>
+        <input id="u" type="text" placeholder="如 admin" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>密码</label>
+        <input id="p" type="password" placeholder="请输入密码" autocomplete="current-password">
+      </div>
+      <button class="btn primary" id="btn">登 录</button>
+      <div class="login-err" id="err"></div>
+      <div class="login-demo">
+        演示账号：admin / hr@2026（系统管理员）<br>
+        zhouh HR专员 · zhrd HR总监 · wangm 部门经理 · zhangx 薪酬专员 · liny 招聘专员 · sunq 普通员工 · shenj 审计（密码 hr@2026）
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  "use strict";
+  var btn = document.getElementById("btn");
+  function doLogin() {
+    var u = document.getElementById("u").value.trim();
+    var p = document.getElementById("p").value;
+    var err = document.getElementById("err");
+    err.textContent = "";
+    if (!u || !p) { err.textContent = "请输入账号与密码"; return; }
+    btn.disabled = true;
+    fetch("api/auth/login", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: u, password: p })
+    }).then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }); })
+      .then(function (x) {
+        btn.disabled = false;
+        if (x.s === 200) {
+          localStorage.setItem("hrm_token", x.j.token);
+          document.cookie = "token=" + x.j.token + "; path=/; max-age=86400";
+          location.href = "./index.html";
+        } else {
+          err.textContent = x.j.message || "登录失败";
+        }
+      }).catch(function () { btn.disabled = false; err.textContent = "网络错误，请稍后重试"; });
+  }
+  btn.addEventListener("click", doLogin);
+  document.addEventListener("keydown", function (e) { if (e.key === "Enter") doLogin(); });
+})();
+</script>
+</body>
+</html>
